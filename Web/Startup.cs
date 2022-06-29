@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Repositories.Repositories;
+using Services;
+using Web.Extensions;
 
 namespace Web
 {
@@ -15,6 +18,12 @@ namespace Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers().AddNewtonsoftJson();
+            services.AddMongoDbClient(Configuration);
+            services.AddAutoMapperConfig(Configuration);
+            services.AddSingleton<IUserRepository, UserRepository>();
+            services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            services.AddSingleton<ITokenManager, TokenManager>();
+            services.AddJwtAuthentication(Configuration);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

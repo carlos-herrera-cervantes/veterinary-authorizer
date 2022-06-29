@@ -5,7 +5,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="8.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.22" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.1.18" />
+    <PackageReference Include="MongoDB.Driver" Version="2.11.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="Extensions\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Extensions\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Repositories\Repositories.csproj" />
+    <ProjectReference Include="..\Services\Services.csproj" />
+  </ItemGroup>
 </Project>
