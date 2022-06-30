@@ -23,6 +23,8 @@ namespace Web.Controllers
 
         private readonly ITokenManager _tokenManager;
 
+        private readonly IUserSessionRepository _userSessionRepository;
+
         #endregion
 
         #region snippet_Constructors
@@ -32,13 +34,15 @@ namespace Web.Controllers
             IUserRepository userRepository,
             IMapper mapper,
             IPasswordHasher passwordHasher,
-            ITokenManager tokenManager
+            ITokenManager tokenManager,
+            IUserSessionRepository userSessionRepository
         )
         {
             _userRepository = userRepository;
             _mapper = mapper;
             _passwordHasher = passwordHasher;
             _tokenManager = tokenManager;
+            _userSessionRepository = userSessionRepository;
         }
 
         #endregion
@@ -56,10 +60,19 @@ namespace Web.Controllers
             }
 
             var token = _tokenManager.GetJwt(user);
+            await _userSessionRepository.SetJwt(token, $"jwt:{user.Email}");
+
             return Ok(new HttpResponseMessage
             {
                 Message = token
             });
+        }
+
+        [HttpPost("sign-out")]
+        public async Task<IActionResult> Signout([FromHeader(Name = "user-email")] string userEmail)
+        {
+            await _userSessionRepository.DropJwt($"jwt:{userEmail}");
+            return NoContent();
         }
 
         [HttpPost("sign-up/customers")]
