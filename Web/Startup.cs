@@ -23,7 +23,9 @@ namespace Web
             services.AddSingleton<IUserRepository, UserRepository>();
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<ITokenManager, TokenManager>();
+            services.AddSingleton<IUserSessionRepository, UserSessionRepository>();
             services.AddJwtAuthentication(Configuration);
+            services.AddRedisClient(Configuration);
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
