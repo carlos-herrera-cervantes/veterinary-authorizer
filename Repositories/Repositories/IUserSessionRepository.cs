@@ -4,8 +4,8 @@ namespace Repositories.Repositories
 {
     public interface IUserSessionRepository
     {
-        public Task SetJwt(string jwt, string key);
+        public Task SetJwtAsync(string jwt, string key);
 
-        public Task DropJwt(string key);
+        public Task DropJwtAsync(string key);
     }
 }

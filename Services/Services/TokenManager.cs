@@ -3,25 +3,12 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Domain.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Services
 {
     public class TokenManager : ITokenManager
     {
-        #region snippet_Properties
-
-        private readonly IConfiguration _configuration;
-
-        #endregion
-
-        #region snippet_Constructors
-
-        public TokenManager(IConfiguration configuration) => _configuration = configuration;
-
-        #endregion
-
         #region snippet_ActionMethods
 
         public string GetJwt(User user)
@@ -33,7 +20,7 @@ namespace Services
                 new Claim(ClaimTypes.Role, roles),
                 new Claim(ClaimTypes.NameIdentifier, user.Id)
             });
-            string secretKey = _configuration["Jwt:SecretKey"];
+            string secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {

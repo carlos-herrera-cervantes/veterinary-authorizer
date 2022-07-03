@@ -1,9 +1,7 @@
-﻿using System;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Domain.Models;
 using MongoDB.Driver;
-using Microsoft.Extensions.Configuration;
+using System;
 
 namespace Repositories.Repositories
 {
@@ -17,22 +15,29 @@ namespace Repositories.Repositories
 
         #region snippet_Constructors
 
-        public UserRepository(MongoClient mongoClient, IConfiguration configuration)
-            => _collection = mongoClient
-            .GetDatabase(configuration["MongoDb:Default"])
-            .GetCollection<User>("users");
+        public UserRepository(IMongoClient mongoClient)
+        {
+            string database = Environment.GetEnvironmentVariable("DEFAULT_DB");
+            _collection = mongoClient.GetDatabase(database).GetCollection<User>("users");
+        }
 
         #endregion
 
         #region snippet_ActionMethods
 
-        public async Task<User> GetOneAsync(Expression<Func<User, bool>> expression)
-            => await _collection.Find(expression).FirstOrDefaultAsync();
+        public async Task<User> GetByStringFieldAsync(string field, string value)
+        {
+            var filter = Builders<User>.Filter.Eq(field, value);
+            return await _collection.FindAsync(filter).Result.FirstOrDefaultAsync();
+        }
 
         public async Task CreateAsync(User user) => await _collection.InsertOneAsync(user);
 
         public async Task UpdateByIdAsync(string id, User user)
-            => await _collection.ReplaceOneAsync(u => u.Id == id, user);
+        {
+            var filter = Builders<User>.Filter.Eq("_id", id);
+            await _collection.ReplaceOneAsync(filter, user);
+        }
 
         #endregion
     }

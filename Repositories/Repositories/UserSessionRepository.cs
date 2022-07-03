@@ -20,13 +20,13 @@ namespace Repositories.Repositories
 
         #region snippet_ActionMethods
 
-        public async Task DropJwt(string key)
+        public async Task DropJwtAsync(string key)
         {
             var client = await _redisClients.GetClientAsync();
             await client.RemoveAsync(key);
         }
 
-        public async Task SetJwt(string jwt, string key)
+        public async Task SetJwtAsync(string jwt, string key)
         {
             var client = await _redisClients.GetClientAsync();
             await client.SetAsync<string>(key, jwt);

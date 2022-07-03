@@ -1,13 +1,11 @@
-﻿using System;
-using System.Linq.Expressions;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Domain.Models;
 
 namespace Repositories.Repositories
 {
     public interface IUserRepository
     {
-        public Task<User> GetOneAsync(Expression<Func<User, bool>> expression);
+        public Task<User> GetByStringFieldAsync(string field, string value);
 
         public Task CreateAsync(User user);
 
