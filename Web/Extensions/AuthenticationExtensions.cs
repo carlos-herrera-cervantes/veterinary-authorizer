@@ -1,16 +1,16 @@
+using System;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Web.Extensions
 {
     public static class AuthenticationExtensions
     {
-        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services)
         {
-            string secretKey = configuration["Jwt:SecretKey"];
+            string secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 
             services.AddAuthentication(x => 
             {

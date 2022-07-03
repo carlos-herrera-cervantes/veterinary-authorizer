@@ -50,9 +50,9 @@ namespace Web.Controllers
         #region snippet_ActionMethods
 
         [HttpPost("sign-in")]
-        public async Task<IActionResult> Signin([FromBody] CreateUser credentials)
+        public async Task<IActionResult> SignInAsync([FromBody] CreateUser credentials)
         {
-            var user = await _userRepository.GetOneAsync(u => u.Email == credentials.Email);
+            var user = await _userRepository.GetByStringFieldAsync("email", credentials.Email);
 
             if (user is null || !_passwordHasher.Verify(credentials.Password, user.Password))
             {
@@ -60,7 +60,7 @@ namespace Web.Controllers
             }
 
             var token = _tokenManager.GetJwt(user);
-            await _userSessionRepository.SetJwt(token, $"jwt:{user.Email}");
+            await _userSessionRepository.SetJwtAsync(token, $"jwt:{user.Email}");
 
             return Ok(new HttpResponseMessage
             {
@@ -69,9 +69,9 @@ namespace Web.Controllers
         }
 
         [HttpPost("sign-out")]
-        public async Task<IActionResult> Signout([FromHeader(Name = "user-email")] string userEmail)
+        public async Task<IActionResult> SignOutAsync([FromHeader(Name = "user-email")] string userEmail)
         {
-            await _userSessionRepository.DropJwt($"jwt:{userEmail}");
+            await _userSessionRepository.DropJwtAsync($"jwt:{userEmail}");
             return NoContent();
         }
 

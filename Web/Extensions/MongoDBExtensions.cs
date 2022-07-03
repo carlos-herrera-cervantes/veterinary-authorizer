@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 
@@ -6,12 +6,12 @@ namespace Web.Extensions
 {
     public static class MongoDBExtensions
     {
-        public static IServiceCollection AddMongoDbClient(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddMongoDbClient(this IServiceCollection services)
         {
-            string uri = configuration["MongoDb:Uri"];
+            string uri = Environment.GetEnvironmentVariable("MONGODB_URI");
             var mongoClient = new MongoClient(uri);
 
-            services.AddSingleton<MongoClient>(_ => mongoClient);
+            services.AddSingleton<IMongoClient>(_ => mongoClient);
             return services;
         }
     }

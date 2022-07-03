@@ -26,3 +26,5 @@ bin
 Properties
 appsettings.*
 .vs
+.env
+.idea
