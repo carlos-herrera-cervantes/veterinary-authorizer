@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Repositories.Repositories;
 using Services;
+using Services.Types;
 using Web.Controllers;
 using Web.Models;
 using Web.Types;
@@ -28,6 +29,8 @@ namespace Tests.Controllers
 
         private readonly Mock<IUserSessionRepository> _mockUserSessionRepository;
 
+        private readonly Mock<IOperationHandler<UserCreatedEvent>> _mockOperationHandler;
+
         #endregion
 
         #region snippet_Constructors
@@ -39,6 +42,7 @@ namespace Tests.Controllers
             _mockPasswordHasher = new Mock<IPasswordHasher>();
             _mockTokenManager = new Mock<ITokenManager>();
             _mockUserSessionRepository = new Mock<IUserSessionRepository>();
+            _mockOperationHandler = new Mock<IOperationHandler<UserCreatedEvent>>();
         }
 
         #endregion
@@ -76,7 +80,8 @@ namespace Tests.Controllers
                 _mockMapper.Object,
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
-                _mockUserSessionRepository.Object
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object
             );
 
             var credentials = new CreateUser
@@ -117,7 +122,8 @@ namespace Tests.Controllers
                 _mockMapper.Object,
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
-                _mockUserSessionRepository.Object
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object
             );
 
             var credentials = new CreateUser
@@ -161,7 +167,8 @@ namespace Tests.Controllers
                 _mockMapper.Object,
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
-                _mockUserSessionRepository.Object
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object
             );
 
             var credentials = new CreateUser
@@ -195,7 +202,8 @@ namespace Tests.Controllers
                 _mockMapper.Object,
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
-                _mockUserSessionRepository.Object
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object
             );
             var response = await authenticationController.SignOutAsync("test@example.com");
             var noContentResult = response as NoContentResult;
@@ -224,13 +232,17 @@ namespace Tests.Controllers
                 .Setup(x => x.Hash(It.IsAny<string>(), It.IsAny<int>()))
                 .Returns("hashed-password");
 
+            _mockOperationHandler
+                .Setup(x => x.Publish(It.IsAny<UserCreatedEvent>()));
+
             var authenticationController = new AuthenticationController
             (
                 _mockUserRepository.Object,
                 _mockMapper.Object,
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
-                _mockUserSessionRepository.Object
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object
             );
 
             var newUser = new CreateUser { Email = "test@example.com", Password = "secret123" };
@@ -245,6 +257,9 @@ namespace Tests.Controllers
 
             _mockPasswordHasher
                 .Verify(x => x.Hash(It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+
+            _mockOperationHandler
+                .Verify(x => x.Publish(It.IsAny<UserCreatedEvent>()), Times.Once);
 
             Assert.IsType<OkObjectResult>(response);
             Assert.IsType<HttpResponseMessage>(okObjectResult.Value);
@@ -268,13 +283,17 @@ namespace Tests.Controllers
                 .Setup(x => x.Hash(It.IsAny<string>(), It.IsAny<int>()))
                 .Returns("hashed-password");
 
+            _mockOperationHandler
+                .Setup(x => x.Publish(It.IsAny<UserCreatedEvent>()));
+
             var authenticationController = new AuthenticationController
             (
                 _mockUserRepository.Object,
                 _mockMapper.Object,
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
-                _mockUserSessionRepository.Object
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object
             );
 
             var newUser = new CreateUser { Email = "test@example.com", Password = "secret123" };
@@ -289,6 +308,9 @@ namespace Tests.Controllers
 
             _mockPasswordHasher
                 .Verify(x => x.Hash(It.IsAny<string>(), It.IsAny<int>()), Times.Once);
+
+            _mockOperationHandler
+                .Verify(x => x.Publish(It.IsAny<UserCreatedEvent>()), Times.Once);
 
             Assert.IsType<OkObjectResult>(response);
             Assert.IsType<HttpResponseMessage>(okObjectResult.Value);

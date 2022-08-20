@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Repositories.Repositories;
 using Services;
+using Services.Backgrounds;
 using Web.Extensions;
 
 namespace Web
@@ -19,8 +20,10 @@ namespace Web
             services.AddSingleton<IPasswordHasher, PasswordHasher>();
             services.AddSingleton<ITokenManager, TokenManager>();
             services.AddSingleton<IUserSessionRepository, UserSessionRepository>();
+            services.AddSingleton(typeof(IOperationHandler<>), typeof(OperationHandler<>));
             services.AddJwtAuthentication();
             services.AddRedisClient();
+            services.AddHostedService<UserProducer>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
