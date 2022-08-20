@@ -5,6 +5,7 @@ using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Repositories;
 using Services;
+using Services.Types;
 using Web.Models;
 using Web.Types;
 
@@ -25,6 +26,8 @@ namespace Web.Controllers
 
         private readonly IUserSessionRepository _userSessionRepository;
 
+        private readonly IOperationHandler<UserCreatedEvent> _userCreatedEvent;
+
         #endregion
 
         #region snippet_Constructors
@@ -35,7 +38,8 @@ namespace Web.Controllers
             IMapper mapper,
             IPasswordHasher passwordHasher,
             ITokenManager tokenManager,
-            IUserSessionRepository userSessionRepository
+            IUserSessionRepository userSessionRepository,
+            IOperationHandler<UserCreatedEvent> userCreatedEvent
         )
         {
             _userRepository = userRepository;
@@ -43,6 +47,7 @@ namespace Web.Controllers
             _passwordHasher = passwordHasher;
             _tokenManager = tokenManager;
             _userSessionRepository = userSessionRepository;
+            _userCreatedEvent = userCreatedEvent;
         }
 
         #endregion
@@ -82,6 +87,8 @@ namespace Web.Controllers
             user.Password = _passwordHasher.Hash(createUser.Password, 10);
 
             await _userRepository.CreateAsync(user);
+            EmitUserCreatedMessage(user, userType: "Customer");
+
             return Ok(new HttpResponseMessage
             {
                 Message = "A verification email was send to you"
@@ -97,10 +104,28 @@ namespace Web.Controllers
             user.Password = _passwordHasher.Hash(createUser.Password, 10);
 
             await _userRepository.CreateAsync(user);
+            EmitUserCreatedMessage(user, userType: "Organization");
+
             return Ok(new HttpResponseMessage
             {
                 Message = "A verification email was send to the employee"
             });
+        }
+
+        #endregion
+
+        #region snippet_Helpers
+
+        private void EmitUserCreatedMessage(User user, string userType)
+        {
+            var message = new UserCreatedEvent
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                Type = userType,
+                Roles = user.Roles
+            };
+            _userCreatedEvent.Publish(message);
         }
 
         #endregion
