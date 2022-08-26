@@ -18,7 +18,7 @@ namespace Services
             {
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, roles),
-                new Claim(ClaimTypes.NameIdentifier, user.Id)
+                new Claim(ClaimTypes.NameIdentifier, user.Id ?? user.Email)
             });
             string secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 

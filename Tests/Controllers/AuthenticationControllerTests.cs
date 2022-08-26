@@ -1,15 +1,20 @@
+using System;
+using System.Linq.Expressions;
+using System.Net;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Moq.Protected;
 using Repositories.Repositories;
 using Services;
 using Services.Types;
 using Web.Controllers;
 using Web.Models;
-using Web.Types;
 using Xunit;
 
 namespace Tests.Controllers
@@ -31,6 +36,10 @@ namespace Tests.Controllers
 
         private readonly Mock<IOperationHandler<UserCreatedEvent>> _mockOperationHandler;
 
+        private readonly Mock<IOperationHandler<UserVerificationEvent>> _mockUserVerificationEvent;
+
+        private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+
         #endregion
 
         #region snippet_Constructors
@@ -43,11 +52,185 @@ namespace Tests.Controllers
             _mockTokenManager = new Mock<ITokenManager>();
             _mockUserSessionRepository = new Mock<IUserSessionRepository>();
             _mockOperationHandler = new Mock<IOperationHandler<UserCreatedEvent>>();
+            _mockUserVerificationEvent = new Mock<IOperationHandler<UserVerificationEvent>>();
+            _mockHttpClientFactory = new Mock<IHttpClientFactory>();
         }
 
         #endregion
 
         #region snippet_Tests
+
+        [Fact(DisplayName = "Should return fallback template when requests fails")]
+        public async Task VerifyEmployeeAccountAsyncShouldReturnNull()
+        {
+            var mockDelegatingHandler = new Mock<DelegatingHandler>();
+            var httpClient = new HttpClient(mockDelegatingHandler.Object);
+            httpClient.BaseAddress = new Uri("http://localhost:4566");
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient)
+                .Verifiable();
+
+            mockDelegatingHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>
+                (
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError))
+                .Verifiable();
+
+            var authenticationController = new AuthenticationController
+            (
+                _mockUserRepository.Object,
+                _mockMapper.Object,
+                _mockPasswordHasher.Object,
+                _mockTokenManager.Object,
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
+            );
+            var response = await authenticationController.VerifyEmployeeAccountAsync(jwt: "dummy-token");
+            var expectedContent = "<html><body><h1>Something went wrong. Comunicate with support.</h1></body></html>";
+
+            Assert.IsType<ContentResult>(response);
+            Assert.Equal("text/html", response.ContentType);
+            Assert.Equal(expectedContent, response.Content);
+        }
+
+        [Fact(DisplayName = "Should return content result when request is success")]
+        public async Task VerifyEmployeeAccountAsyncShouldReturnContentResult()
+        {
+            var mockDelegatingHandler = new Mock<DelegatingHandler>();
+            var httpClient = new HttpClient(mockDelegatingHandler.Object);
+            httpClient.BaseAddress = new Uri("http://localhost:4566");
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient)
+                .Verifiable();
+
+            mockDelegatingHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>
+                (
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent("<html><h1>Hello world</h1></html>")
+                })
+                .Verifiable();
+
+            var authenticationController = new AuthenticationController
+            (
+                _mockUserRepository.Object,
+                _mockMapper.Object,
+                _mockPasswordHasher.Object,
+                _mockTokenManager.Object,
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
+            );
+            var response = await authenticationController.VerifyEmployeeAccountAsync(jwt: "dummy-token");
+
+            Assert.IsType<ContentResult>(response);
+            Assert.Equal("text/html", response.ContentType);
+        }
+
+        [Fact(DisplayName = "Should return fallback template when requests fails")]
+        public async Task VerifyCustomerAccountAsyncShouldReturnNull()
+        {
+            var mockDelegatingHandler = new Mock<DelegatingHandler>();
+            var httpClient = new HttpClient(mockDelegatingHandler.Object);
+            httpClient.BaseAddress = new Uri("http://localhost:4566");
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient)
+                .Verifiable();
+
+            mockDelegatingHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>
+                (
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError))
+                .Verifiable();
+
+            var authenticationController = new AuthenticationController
+            (
+                _mockUserRepository.Object,
+                _mockMapper.Object,
+                _mockPasswordHasher.Object,
+                _mockTokenManager.Object,
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
+            );
+            var response = await authenticationController.VerifyCustomerAccountAsync(jwt: "dummy-token");
+            var expectedContent = "<html><body><h1>Something went wrong. Comunicate with support.</h1></body></html>";
+
+            Assert.IsType<ContentResult>(response);
+            Assert.Equal("text/html", response.ContentType);
+            Assert.Equal(expectedContent, response.Content);
+        }
+
+        [Fact(DisplayName = "Should return content result when request is success")]
+        public async Task VerifyCustomerAccountAsyncShouldReturnContentResult()
+        {
+            var mockDelegatingHandler = new Mock<DelegatingHandler>();
+            var httpClient = new HttpClient(mockDelegatingHandler.Object);
+            httpClient.BaseAddress = new Uri("http://localhost:4566");
+
+            _mockHttpClientFactory
+                .Setup(x => x.CreateClient(It.IsAny<string>()))
+                .Returns(httpClient)
+                .Verifiable();
+
+            mockDelegatingHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>
+                (
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = new StringContent("<html><h1>Hello world</h1></html>")
+                })
+                .Verifiable();
+
+            var authenticationController = new AuthenticationController
+            (
+                _mockUserRepository.Object,
+                _mockMapper.Object,
+                _mockPasswordHasher.Object,
+                _mockTokenManager.Object,
+                _mockUserSessionRepository.Object,
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
+            );
+            var response = await authenticationController.VerifyCustomerAccountAsync(jwt: "dummy-token");
+
+            Assert.IsType<ContentResult>(response);
+            Assert.Equal("text/html", response.ContentType);
+        }
 
         [Fact(DisplayName = "Should return a 200 status code response for success sign in")]
         public async Task SigninShouldReturn200Response()
@@ -59,7 +242,7 @@ namespace Tests.Controllers
             };
 
             _mockUserRepository
-                .Setup(x => x.GetByStringFieldAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
                 .ReturnsAsync(user);
 
             _mockPasswordHasher
@@ -81,7 +264,9 @@ namespace Tests.Controllers
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
                 _mockUserSessionRepository.Object,
-                _mockOperationHandler.Object
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
             );
 
             var credentials = new CreateUser
@@ -93,7 +278,7 @@ namespace Tests.Controllers
             var okObjectResult = response as OkObjectResult;
 
             _mockUserRepository
-                .Verify(x => x.GetByStringFieldAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
 
             _mockPasswordHasher
                 .Verify(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
@@ -105,7 +290,7 @@ namespace Tests.Controllers
                 .Verify(x => x.SetJwtAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
 
             Assert.IsType<OkObjectResult>(response);
-            Assert.IsType<HttpResponseMessage>(okObjectResult.Value);
+            Assert.IsType<Web.Types.HttpResponseMessage>(okObjectResult.Value);
             Assert.Equal(StatusCodes.Status200OK, okObjectResult.StatusCode);
         }
 
@@ -113,7 +298,7 @@ namespace Tests.Controllers
         public async Task SigninShouldReturn404ResponseWhenUserNull()
         {
             _mockUserRepository
-                .Setup(x => x.GetByStringFieldAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
                 .ReturnsAsync(() => null);
 
             var authenticationController = new AuthenticationController
@@ -123,7 +308,9 @@ namespace Tests.Controllers
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
                 _mockUserSessionRepository.Object,
-                _mockOperationHandler.Object
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
             );
 
             var credentials = new CreateUser
@@ -135,7 +322,7 @@ namespace Tests.Controllers
             var notFoundResult = response as NotFoundResult;
 
             _mockUserRepository
-                .Verify(x => x.GetByStringFieldAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
 
             _mockPasswordHasher
                 .Verify(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -154,7 +341,7 @@ namespace Tests.Controllers
             };
 
             _mockUserRepository
-                .Setup(x => x.GetByStringFieldAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
                 .ReturnsAsync(user);
 
             _mockPasswordHasher
@@ -168,7 +355,9 @@ namespace Tests.Controllers
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
                 _mockUserSessionRepository.Object,
-                _mockOperationHandler.Object
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
             );
 
             var credentials = new CreateUser
@@ -180,7 +369,7 @@ namespace Tests.Controllers
             var notFoundResult = response as NotFoundResult;
 
             _mockUserRepository
-                .Verify(x => x.GetByStringFieldAsync(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
 
             _mockPasswordHasher
                 .Verify(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
@@ -203,7 +392,9 @@ namespace Tests.Controllers
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
                 _mockUserSessionRepository.Object,
-                _mockOperationHandler.Object
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
             );
             var response = await authenticationController.SignOutAsync("test@example.com");
             var noContentResult = response as NoContentResult;
@@ -242,7 +433,9 @@ namespace Tests.Controllers
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
                 _mockUserSessionRepository.Object,
-                _mockOperationHandler.Object
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
             );
 
             var newUser = new CreateUser { Email = "test@example.com", Password = "secret123" };
@@ -262,7 +455,7 @@ namespace Tests.Controllers
                 .Verify(x => x.Publish(It.IsAny<UserCreatedEvent>()), Times.Once);
 
             Assert.IsType<OkObjectResult>(response);
-            Assert.IsType<HttpResponseMessage>(okObjectResult.Value);
+            Assert.IsType<Web.Types.HttpResponseMessage>(okObjectResult.Value);
             Assert.Equal(StatusCodes.Status200OK, okObjectResult.StatusCode);
         }
 
@@ -293,7 +486,9 @@ namespace Tests.Controllers
                 _mockPasswordHasher.Object,
                 _mockTokenManager.Object,
                 _mockUserSessionRepository.Object,
-                _mockOperationHandler.Object
+                _mockOperationHandler.Object,
+                _mockUserVerificationEvent.Object,
+                _mockHttpClientFactory.Object
             );
 
             var newUser = new CreateUser { Email = "test@example.com", Password = "secret123" };
@@ -313,7 +508,7 @@ namespace Tests.Controllers
                 .Verify(x => x.Publish(It.IsAny<UserCreatedEvent>()), Times.Once);
 
             Assert.IsType<OkObjectResult>(response);
-            Assert.IsType<HttpResponseMessage>(okObjectResult.Value);
+            Assert.IsType<Web.Types.HttpResponseMessage>(okObjectResult.Value);
             Assert.Equal(StatusCodes.Status200OK, okObjectResult.StatusCode);
         }
 
