@@ -1,3 +1,4 @@
+using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,7 +24,12 @@ namespace Web
             services.AddSingleton(typeof(IOperationHandler<>), typeof(OperationHandler<>));
             services.AddJwtAuthentication();
             services.AddRedisClient();
+            services.AddHttpClient("veterinary", c =>
+            {
+                c.BaseAddress = new Uri(Environment.GetEnvironmentVariable("VETERINARY_STATICS"));
+            });
             services.AddHostedService<UserProducer>();
+            services.AddHostedService<UserVerificationProducer>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

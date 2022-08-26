@@ -69,7 +69,7 @@ namespace Tests.Repositories
                 .ReturnsAsync(_mockMongoCursor.Object);
 
             var userRepository = new UserRepository(_mockMongoClient.Object);
-            var result = await userRepository.GetByStringFieldAsync("email", "bad@example.com");
+            var result = await userRepository.GetAsync(u => u.Email, "bad@example.com");
 
             _mockMongoCollection
                 .Verify(x => x.FindAsync
@@ -107,7 +107,7 @@ namespace Tests.Repositories
                 .ReturnsAsync(_mockMongoCursor.Object);
 
             var userRepository = new UserRepository(_mockMongoClient.Object);
-            var result = await userRepository.GetByStringFieldAsync("email", "test@example.com");
+            var result = await userRepository.GetAsync(u => u.Email, "test@example.com");
 
             _mockMongoCollection
                 .Verify(x => x.FindAsync

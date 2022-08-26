@@ -2,6 +2,7 @@
 using Domain.Models;
 using MongoDB.Driver;
 using System;
+using System.Linq.Expressions;
 
 namespace Repositories.Repositories
 {
@@ -25,9 +26,9 @@ namespace Repositories.Repositories
 
         #region snippet_ActionMethods
 
-        public async Task<User> GetByStringFieldAsync(string field, string value)
+        public async Task<User> GetAsync(Expression<Func<User, string>> expression, string value)
         {
-            var filter = Builders<User>.Filter.Eq(field, value);
+            var filter = Builders<User>.Filter.Eq(expression, value);
             return await _collection.FindAsync(filter).Result.FirstOrDefaultAsync();
         }
 
@@ -35,7 +36,7 @@ namespace Repositories.Repositories
 
         public async Task UpdateByIdAsync(string id, User user)
         {
-            var filter = Builders<User>.Filter.Eq("_id", id);
+            var filter = Builders<User>.Filter.Eq(u => u.Id, id);
             await _collection.ReplaceOneAsync(filter, user);
         }
 
