@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 
@@ -13,5 +14,12 @@ namespace Web.Models
         [Required]
         [JsonProperty("password")]
         public string Password { get; set; }
+    }
+
+    public class LockUser
+    {
+        [Required]
+        [JsonProperty("emails")]
+        public List<string> Emails { get; set; }
     }
 }

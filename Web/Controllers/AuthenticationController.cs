@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Net.Http;
 using System.Threading.Tasks;
 using AutoMapper;
 using Domain.Enums;
@@ -9,6 +8,7 @@ using Repositories.Repositories;
 using Services;
 using Services.Types;
 using Web.Models;
+using Web.Types;
 
 namespace Web.Controllers
 {
@@ -31,8 +31,6 @@ namespace Web.Controllers
 
         private readonly IOperationHandler<UserVerificationEvent> _userVerificationEvent;
 
-        private readonly HttpClient _httpClient;
-
         #endregion
 
         #region snippet_Constructors
@@ -45,8 +43,7 @@ namespace Web.Controllers
             ITokenManager tokenManager,
             IUserSessionRepository userSessionRepository,
             IOperationHandler<UserCreatedEvent> userCreatedEvent,
-            IOperationHandler<UserVerificationEvent> userVerificationEvent,
-            IHttpClientFactory clientFactory
+            IOperationHandler<UserVerificationEvent> userVerificationEvent
         )
         {
             _userRepository = userRepository;
@@ -56,68 +53,11 @@ namespace Web.Controllers
             _userSessionRepository = userSessionRepository;
             _userCreatedEvent = userCreatedEvent;
             _userVerificationEvent = userVerificationEvent;
-            _httpClient = clientFactory.CreateClient("veterinary");
         }
 
         #endregion
 
         #region snippet_ActionMethods
-
-        [HttpGet("employee/verification/{jwt}")]
-        public async Task<ContentResult> VerifyEmployeeAccountAsync([FromRoute] string jwt)
-        {
-            var successVerificationTemplate = "/veterinary-statics/success-employee-verification.html";
-            using var httpResponse = await _httpClient.GetAsync(successVerificationTemplate);
-
-            var user = await _userRepository.GetAsync(u => u.VerificationToken, jwt);
-
-            if (!httpResponse.IsSuccessStatusCode || user is null)
-            {
-                return new ContentResult
-                {
-                    Content = "<html><body><h1>Something went wrong. Comunicate with support.</h1></body></html>",
-                    ContentType = "text/html"
-                };
-            }
-
-            user.Verified = true;
-            await _userRepository.UpdateByIdAsync(user.Id, user);
-
-            var stringContent = await httpResponse.Content.ReadAsStringAsync();
-            return new ContentResult
-            {
-                Content = stringContent,
-                ContentType = "text/html"
-            };
-        }
-
-        [HttpGet("customer/verification/{jwt}")]
-        public async Task<ContentResult> VerifyCustomerAccountAsync([FromRoute] string jwt)
-        {
-            var successVerificationTemplate = "/veterinary-statics/success-customer-verification.html";
-            using var httpResponse = await _httpClient.GetAsync(successVerificationTemplate);
-
-            var user = await _userRepository.GetAsync(u => u.VerificationToken, jwt);
-
-            if (!httpResponse.IsSuccessStatusCode || user is null)
-            {
-                return new ContentResult
-                {
-                    Content = "<html><body><h1>Something went wrong. Comunicate with support.</h1></body></html>",
-                    ContentType = "text/html"
-                };
-            }
-
-            user.Verified = true;
-            await _userRepository.UpdateByIdAsync(user.Id, user);
-            
-            var stringContent = await httpResponse.Content.ReadAsStringAsync();
-            return new ContentResult
-            {
-                Content = stringContent,
-                ContentType = "text/html"
-            };
-        }
 
         [HttpPost("sign-in")]
         public async Task<IActionResult> SignInAsync([FromBody] CreateUser credentials)
@@ -129,15 +69,18 @@ namespace Web.Controllers
                 return NotFound();
             }
 
-            if (!user.Verified)
+            if (!user.Verified || user.Block)
             {
-                return Unauthorized("Account not verified");
+                return new UnauthorizedObjectResult(new HttpResponseMessage
+                {
+                    Message = "Your account is not verified or is locked."
+                });
             }
 
             var token = _tokenManager.GetJwt(user);
             await _userSessionRepository.SetJwtAsync(token, $"jwt:{user.Email}");
 
-            return Ok(new Types.HttpResponseMessage
+            return Ok(new HttpResponseMessage
             {
                 Message = token
             });
@@ -146,7 +89,7 @@ namespace Web.Controllers
         [HttpPost("sign-out")]
         public async Task<IActionResult> SignOutAsync([FromHeader(Name = "user-email")] string userEmail)
         {
-            await _userSessionRepository.DropJwtAsync($"jwt:{userEmail}");
+            await _userSessionRepository.DropJwtAsync(new List<string> { $"jwt:{userEmail}" });
             return NoContent();
         }
 
@@ -164,7 +107,7 @@ namespace Web.Controllers
             EmitUserCreatedMessage(user, userType: "Customer");
             EmitUserVerificationMessage(user);
 
-            return Ok(new Types.HttpResponseMessage
+            return Ok(new HttpResponseMessage
             {
                 Message = "A verification email was send to you"
             });
@@ -186,7 +129,7 @@ namespace Web.Controllers
             EmitUserCreatedMessage(user, userType: "Organization");
             EmitUserVerificationMessage(user);
 
-            return Ok(new Types.HttpResponseMessage
+            return Ok(new HttpResponseMessage
             {
                 Message = "A verification email was send to the employee"
             });

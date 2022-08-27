@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using ServiceStack.Redis;
 
@@ -20,10 +21,10 @@ namespace Repositories.Repositories
 
         #region snippet_ActionMethods
 
-        public async Task DropJwtAsync(string key)
+        public async Task DropJwtAsync(IEnumerable<string> keys)
         {
             var client = await _redisClients.GetClientAsync();
-            await client.RemoveAsync(key);
+            await client.RemoveAllAsync(keys);
         }
 
         public async Task SetJwtAsync(string jwt, string key)

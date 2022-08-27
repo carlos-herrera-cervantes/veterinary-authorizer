@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
@@ -37,14 +38,14 @@ namespace Tests.Repositories
                 .ReturnsAsync(mockRedisClient.Object);
 
             mockRedisClient
-                .Setup(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
+                .Setup(x => x.RemoveAllAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(true));
 
             var userSessionRepository = new UserSessionRepository(_mockRedisClientsManager.Object);
-            await userSessionRepository.DropJwtAsync("dummy-key");
+            await userSessionRepository.DropJwtAsync(new List<string>{ "jwt:test@example.com" });
 
             mockRedisClient
-                .Verify(x => x.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+                .Verify(x => x.RemoveAllAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact(DisplayName = "Should call the set async method")]
