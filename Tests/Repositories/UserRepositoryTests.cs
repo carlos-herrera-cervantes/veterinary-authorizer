@@ -123,6 +123,44 @@ namespace Tests.Repositories
             Assert.Equal("test@example.com", result.Email);
         }
 
+        [Fact(DisplayName = "Should return a list of users")]
+        public async Task GetAllAsyncShouldReturnList()
+        {
+            _mockMongoClient
+                .Setup(x => x.GetDatabase(It.IsAny<string>(), default))
+                .Returns(_mockMongoDatabase.Object);
+            _mockMongoDatabase
+                .Setup(x => x.GetCollection<User>("users", default))
+                .Returns(_mockMongoCollection.Object);
+            _mockMongoCursor
+                .Setup(x => x.Current)
+                .Returns(_users);
+            _mockMongoCollection
+                .Setup(x => x.FindAsync
+                    (
+                        It.IsAny<FilterDefinition<User>>(),
+                        It.IsAny<FindOptions<User, User>>(),
+                        It.IsAny<CancellationToken>()
+                    ))
+                .ReturnsAsync(_mockMongoCursor.Object);
+
+            var userRepository = new UserRepository(_mockMongoClient.Object);
+            var result = await userRepository
+                .GetAllAsync(u => u.Email, new List<string> { "test@example.com" });
+
+            _mockMongoCollection
+                .Verify(x => x.FindAsync
+                    (
+                        It.IsAny<FilterDefinition<User>>(),
+                        It.IsAny<FindOptions<User, User>>(),
+                        It.IsAny<CancellationToken>()
+                    ),
+                    Times.Once
+                );
+
+            Assert.Empty(result);
+        }
+
         [Fact(DisplayName = "Should call the insert one async method")]
         public async Task CreateAsyncShouldCreateUser()
         {
@@ -192,6 +230,46 @@ namespace Tests.Repositories
                     ),
                     Times.Once
                 );
+        }
+
+        [Fact(DisplayName = "Should call the bulk write async method")]
+        public async Task UpdateManyAsyncShouldUpdateUsers()
+        {
+            _mockMongoClient
+                .Setup(x => x.GetDatabase(It.IsAny<string>(), default))
+                .Returns(_mockMongoDatabase.Object);
+            _mockMongoDatabase
+                .Setup(x => x.GetCollection<User>("users", default))
+                .Returns(_mockMongoCollection.Object);
+
+            var mockBulkWriteResult = (BulkWriteResult<User>) new BulkWriteResult<User>.Acknowledged
+            (
+                200,0,0,0,
+                0,
+                new List<WriteModel<User>>(),
+                new List<BulkWriteUpsert>()
+            );
+            _mockMongoCollection
+                .Setup(x => x.BulkWriteAsync
+                    (
+                        It.IsAny<IEnumerable<WriteModel<User>>>(),
+                        It.IsAny<BulkWriteOptions>(),
+                        It.IsAny<CancellationToken>()
+                    ))
+                .ReturnsAsync(mockBulkWriteResult);
+
+            var userRepository = new UserRepository(_mockMongoClient.Object);
+            var emails = new List<string>{ "test@example.com" };
+            await userRepository
+                .UpdateManyAsync<string, bool>(u => u.Email, emails, u => u.Block, true);
+
+            _mockMongoCollection
+                .Verify(x => x.BulkWriteAsync
+                    (
+                        It.IsAny<IEnumerable<WriteModel<User>>>(),
+                        It.IsAny<BulkWriteOptions>(),
+                        It.IsAny<CancellationToken>()
+                    ), Times.Once);
         }
 
         #endregion
