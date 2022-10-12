@@ -1,9 +1,8 @@
 using Domain.Models;
 
-namespace Services
+namespace Services;
+
+public interface ITokenManager
 {
-    public interface ITokenManager
-    {
-        public string GetJwt(User user);
-    }
+    public string GetJwt(User user);
 }

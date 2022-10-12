@@ -1,9 +1,8 @@
-namespace Domain.Constants
-{
-    public static class KafkaTopic
-    {
-        public const string UserCreated = "veterinary-user-created";
+namespace Domain.Constants;
 
-        public const string UserVerification = "send-email";
-    }
+public static class KafkaTopic
+{
+    public const string UserCreated = "veterinary-user-created";
+
+    public const string UserVerification = "send-email";
 }
