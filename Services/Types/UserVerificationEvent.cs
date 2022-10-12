@@ -1,22 +1,21 @@
 using Newtonsoft.Json;
 
-namespace Services.Types
+namespace Services.Types;
+
+public class UserVerificationEvent
 {
-    public class UserVerificationEvent
-    {
-        [JsonProperty("to")]
-        public string To { get; set; }
+    [JsonProperty("to")]
+    public string To { get; set; }
 
-        [JsonProperty("subject")]
-        public string Subject { get; set; }
+    [JsonProperty("subject")]
+    public string Subject { get; set; }
 
-        [JsonProperty("body")]
-        public string Body { get; set; }
+    [JsonProperty("body")]
+    public string Body { get; set; }
 
-        [JsonIgnore]
-        public string UserType { get; set; }
+    [JsonIgnore]
+    public string UserType { get; set; }
 
-        [JsonIgnore]
-        public string Jwt { get; set; }
-    }
-};
+    [JsonIgnore]
+    public string Jwt { get; set; }
+}

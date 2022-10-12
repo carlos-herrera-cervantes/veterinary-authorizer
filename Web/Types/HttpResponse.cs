@@ -1,10 +1,9 @@
 using Newtonsoft.Json;
 
-namespace Web.Types
+namespace Web.Types;
+
+public class HttpResponseMessage
 {
-    public class HttpResponseMessage
-    {
-        [JsonProperty("message")]
-        public string Message { get; set; }
-    }
+    [JsonProperty("message")]
+    public string Message { get; set; }
 }

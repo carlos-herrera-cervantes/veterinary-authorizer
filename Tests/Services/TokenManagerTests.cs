@@ -3,30 +3,29 @@ using Domain.Models;
 using Services;
 using Xunit;
 
-namespace Tests.Services
+namespace Tests.Services;
+
+[Collection("TokenManager")]
+public class TokenManagerTests
 {
-    [Collection("TokenManager")]
-    public class TokenManagerTests
+    #region snippet_Tests
+
+    [Fact(DisplayName = "Should generate a JWT")]
+    public void GetJwtShouldReturnToken()
     {
-        #region snippet_Tests
+        var tokenManager = new TokenManager();
 
-        [Fact(DisplayName = "Should generate a JWT")]
-        public void GetJwtShouldReturnToken()
+        var user = new User
         {
-            var tokenManager = new TokenManager();
+            Email = "test@example.com",
+            Roles = new List<string> { "Employee" },
+            Id = "dummy-id"
+        };
+        var jwt = tokenManager.GetJwt(user);
 
-            var user = new User
-            {
-                Email = "test@example.com",
-                Roles = new List<string>{ "Employee" },
-                Id = "dummy-id"
-            };
-            var jwt = tokenManager.GetJwt(user);
-
-            Assert.NotNull(jwt);
-            Assert.NotEmpty(jwt);
-        }
-
-        #endregion
+        Assert.NotNull(jwt);
+        Assert.NotEmpty(jwt);
     }
+
+    #endregion
 }
