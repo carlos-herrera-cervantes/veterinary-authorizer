@@ -39,6 +39,8 @@ public class UserRepository : IUserRepository
         return await _collection.FindAsync(filter).Result.ToListAsync();
     }
 
+    public async Task<int> CountAsync(FilterDefinition<User> filter) => (int)await _collection.CountDocumentsAsync(filter);
+
     public async Task CreateAsync(User user) => await _collection.InsertOneAsync(user);
 
     public async Task UpdateByIdAsync(string id, User user)
@@ -47,13 +49,8 @@ public class UserRepository : IUserRepository
         await _collection.ReplaceOneAsync(filter, user);
     }
 
-    public async Task UpdateManyAsync<T, K>
-    (
-        Expression<Func<User, T>> filterExpression,
-        List<T> values,
-        Expression<Func<User, K>> updateExpression,
-        K value
-    ) where T : class
+    public async Task UpdateManyAsync<T, K>(Expression<Func<User, T>> filterExpression, List<T> values, Expression<Func<User, K>> updateExpression, K value)
+        where T : class
     {
         var listWrites = new List<WriteModel<User>>();
         var filterDefinition = Builders<User>.Filter.In(filterExpression, values);
@@ -63,6 +60,8 @@ public class UserRepository : IUserRepository
 
         await _collection.BulkWriteAsync(listWrites);
     }
+
+    public async Task DeleteManyAsync(FilterDefinition<User> filter) => await _collection.DeleteManyAsync(filter);
 
     #endregion
 }

@@ -28,6 +28,28 @@ public class UserSessionRepositoryTests
 
     #region snippet_Tests
 
+    [Fact(DisplayName = "Should call the get async method")]
+    public async Task GetJwtAsync()
+    {
+        var mockRedisClient = new Mock<IRedisClientAsync>();
+
+        _mockRedisClientsManager
+            .Setup(x => x.GetClientAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockRedisClient.Object);
+
+        mockRedisClient
+            .Setup(x => x.GetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("dummy-jwt");
+
+        var userSessionRepository = new UserSessionRepository(_mockRedisClientsManager.Object);
+        var jwt = await userSessionRepository.GetJwtAsync("jwt:dummy@example.com");
+
+        mockRedisClient.Verify(x
+            => x.GetAsync<string>(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+
+        Assert.Equal("dummy-jwt", jwt);
+    }
+
     [Fact(DisplayName = "Should call the remove async method")]
     public async Task DropJwt()
     {

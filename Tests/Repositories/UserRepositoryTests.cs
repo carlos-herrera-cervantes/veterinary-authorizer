@@ -161,6 +161,40 @@ public class UserRepositoryTests
         Assert.Empty(result);
     }
 
+    [Fact(DisplayName = "Should return 0 when there are no documents")]
+    public async Task CountAsyncShouldReturn0()
+    {
+        _mockMongoClient
+            .Setup(x => x.GetDatabase(It.IsAny<string>(), default))
+            .Returns(_mockMongoDatabase.Object);
+        _mockMongoDatabase
+            .Setup(x => x.GetCollection<User>("users", default))
+            .Returns(_mockMongoCollection.Object);
+        _mockMongoCollection
+            .Setup(x => x.CountDocumentsAsync
+            (
+                It.IsAny<FilterDefinition<User>>(),
+                It.IsAny<CountOptions>(),
+                It.IsAny<CancellationToken>())
+            )
+            .ReturnsAsync(0L);
+
+        var userRepository = new UserRepository(_mockMongoClient.Object);
+        var result = await userRepository.CountAsync(Builders<User>.Filter.Empty);
+
+        _mockMongoCollection
+            .Verify(x => x.CountDocumentsAsync
+                (
+                    It.IsAny<FilterDefinition<User>>(),
+                    It.IsAny<CountOptions>(),
+                    It.IsAny<CancellationToken>()
+                ),
+                Times.Once
+            );
+
+        Assert.Equal(0L, result);
+    }
+
     [Fact(DisplayName = "Should call the insert one async method")]
     public async Task CreateAsyncShouldCreateUser()
     {
@@ -270,6 +304,27 @@ public class UserRepositoryTests
                     It.IsAny<BulkWriteOptions>(),
                     It.IsAny<CancellationToken>()
                 ), Times.Once);
+    }
+
+    [Fact(DisplayName = "Should delete documents")]
+    public async Task DeleteManyAsyncShouldDeleteDocuments()
+    {
+        _mockMongoClient
+            .Setup(x => x.GetDatabase(It.IsAny<string>(), default))
+            .Returns(_mockMongoDatabase.Object);
+        _mockMongoDatabase
+            .Setup(x => x.GetCollection<User>("users", default))
+            .Returns(_mockMongoCollection.Object);
+        var mockDeleteResult = new Mock<DeleteResult>();
+        _mockMongoCollection
+            .Setup(x => x.DeleteManyAsync(It.IsAny<FilterDefinition<User>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(mockDeleteResult.Object);
+
+        var userRepository = new UserRepository(_mockMongoClient.Object);
+        await userRepository.DeleteManyAsync(Builders<User>.Filter.Empty);
+
+        _mockMongoCollection.Verify(x
+            => x.DeleteManyAsync(It.IsAny<FilterDefinition<User>>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     #endregion

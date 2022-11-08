@@ -21,6 +21,12 @@ public class UserSessionRepository : IUserSessionRepository
 
     #region snippet_ActionMethods
 
+    public async Task<string> GetJwtAsync(string key)
+    {
+        var client = await _redisClients.GetClientAsync();
+        return await client.GetAsync<string>(key);
+    }
+
     public async Task DropJwtAsync(IEnumerable<string> keys)
     {
         var client = await _redisClients.GetClientAsync();
