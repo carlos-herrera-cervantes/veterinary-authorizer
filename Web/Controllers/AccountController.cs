@@ -1,14 +1,15 @@
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
-using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Repositories;
+using Domain.Enums;
 using Web.Models;
+using Web.Config;
 
 namespace Web.Controllers;
 
-[Route("api/v1/authentication/account")]
+[Route($"{ApiConfig.BasePath}/v1/account")]
 public class AccountController : ControllerBase
 {
     #region snippet_Properties
