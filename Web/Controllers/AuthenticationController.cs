@@ -1,18 +1,20 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using Domain.Enums;
 using Domain.Models;
-using Microsoft.AspNetCore.Mvc;
 using Repositories.Repositories;
 using Services;
 using Services.Types;
 using Web.Models;
 using Web.Types;
+using Web.Config;
+
 
 namespace Web.Controllers;
 
-[Route("api/v1/authentication")]
+[Route($"{ApiConfig.BasePath}/v1")]
 public class AuthenticationController : ControllerBase
 {
     #region snippet_Properties
