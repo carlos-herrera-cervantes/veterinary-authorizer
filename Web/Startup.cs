@@ -7,6 +7,7 @@ using Repositories.Repositories;
 using Services;
 using Services.Backgrounds;
 using Web.Extensions;
+using Domain.Constants;
 
 namespace Web;
 
@@ -26,10 +27,11 @@ public class Startup
         services.AddRedisClient();
         services.AddHttpClient("veterinary", c =>
         {
-            c.BaseAddress = new Uri(Environment.GetEnvironmentVariable("VETERINARY_STATICS"));
+            c.BaseAddress = new Uri(S3Config.Host);
         });
         services.AddHostedService<UserProducer>();
         services.AddHostedService<UserVerificationProducer>();
+        services.AddHostedService<UserMigrator>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

@@ -1,9 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Repositories.Repositories;
+using MongoDB.Driver.Core.Configuration;
 using ServiceStack.Redis;
 using Xunit;
+using Repositories.Repositories;
 
 namespace Tests.Repositories;
 
@@ -18,11 +19,7 @@ public class UserSessionRepositoryIntegrationTests
 
     #region snippet_Constructors
 
-    public UserSessionRepositoryIntegrationTests()
-    {
-        string connectionString = Environment.GetEnvironmentVariable("REDIS_URI");
-        _redisClient = new RedisManagerPool(connectionString);
-    }
+    public UserSessionRepositoryIntegrationTests() => _redisClient = new RedisManagerPool(Domain.Constants.RedisConfig.Uri);
 
     #endregion
 

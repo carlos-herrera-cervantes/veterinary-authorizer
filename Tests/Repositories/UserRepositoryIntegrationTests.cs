@@ -2,9 +2,10 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using MongoDB.Driver;
-using Repositories.Repositories;
 using Xunit;
+using Repositories.Repositories;
 using Domain.Models;
+using Domain.Constants;
 
 namespace Tests.Repositories;
 
@@ -19,11 +20,7 @@ public class UserRepositoryIntegrationTests
 
     #region snippet_Constructors
 
-    public UserRepositoryIntegrationTests()
-    {
-        string uri = Environment.GetEnvironmentVariable("MONGODB_URI");
-        _mongoClient = new MongoClient(uri);
-    }
+    public UserRepositoryIntegrationTests() => _mongoClient = new MongoClient(MongoConfig.Uri);
 
     #endregion
 
@@ -33,7 +30,7 @@ public class UserRepositoryIntegrationTests
     public async Task GetAsyncShouldReturnEmptyDocument()
     {
         var userRepository = new UserRepository(_mongoClient);
-        var document = await userRepository.GetAsync(u => u.Email, "dummy-email@example.com");
+        var document = await userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Email, "dummy-email@example.com"));
         Assert.Null(document);
     }
 
@@ -41,7 +38,7 @@ public class UserRepositoryIntegrationTests
     public async Task GetAllAsyncShouldReturnEmptyList()
     {
         var userRepository = new UserRepository(_mongoClient);
-        var list = await userRepository.GetAllAsync(u => u.Email, new List<string>());
+        var list = await userRepository.GetAllAsync(Builders<User>.Filter.In(u => u.Email, new List<string>()));
         Assert.Empty(list);
     }
 
@@ -68,13 +65,13 @@ public class UserRepositoryIntegrationTests
         Assert.NotNull(user.Id);
         Assert.Equal(1, counterBeforeDelete);
 
-        var insertResult = await userRepository.GetAsync(u => u.Id, user.Id);
+        var insertResult = await userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Id, user.Id));
         Assert.NotNull(insertResult);
 
         insertResult.Block = true;
-        await userRepository.UpdateByIdAsync(insertResult.Id, insertResult);
+        await userRepository.UpdateByIdAsync(Builders<User>.Filter.Eq(u => u.Id, insertResult.Id), insertResult);
 
-        var updateResult = await userRepository.GetAsync(u => u.Id, user.Id);
+        var updateResult = await userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Id, user.Id));
         Assert.True(updateResult.Block);
 
         await userRepository.DeleteManyAsync(Builders<User>.Filter.Empty);

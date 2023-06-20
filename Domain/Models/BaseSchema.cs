@@ -13,9 +13,9 @@ public class BaseSchema
 
     [BsonElement("created_at")]
     [BsonRepresentation(BsonType.DateTime)]
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
 
     [BsonElement("updated_at")]
     [BsonRepresentation(BsonType.DateTime)]
-    public DateTime UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; } = DateTime.Now;
 }

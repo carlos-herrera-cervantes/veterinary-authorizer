@@ -2,12 +2,12 @@ using System;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Confluent.Kafka;
-using Domain.Constants;
-using Domain.Enums;
 using Microsoft.Extensions.Hosting;
+using Confluent.Kafka;
 using Newtonsoft.Json;
 using Services.Types;
+using Domain.Constants;
+using Domain.Enums;
 
 namespace Services.Backgrounds;
 
@@ -23,8 +23,7 @@ public class UserVerificationProducer : BackgroundService
 
     #region snippet_Constructors
 
-    public UserVerificationProducer
-    (
+    public UserVerificationProducer(
         IOperationHandler<UserVerificationEvent> operationHandler,
         IHttpClientFactory clientFactory
     )
@@ -53,8 +52,8 @@ public class UserVerificationProducer : BackgroundService
 
             var config = new ProducerConfig
             {
-                BootstrapServers = Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS"),
-                ClientId = Environment.GetEnvironmentVariable("CLIENT_ID")
+                BootstrapServers = KafkaConfig.BootstrapServer,
+                ClientId = KafkaConfig.ClientId
             };
             using var producer = new ProducerBuilder<Null, string>(config).Build();
 
@@ -74,8 +73,7 @@ public class UserVerificationProducer : BackgroundService
             await producer.ProduceAsync(KafkaTopic.UserVerification, message);
         };
 
-        _operationHandler.Subscribe
-        (
+        _operationHandler.Subscribe(
             "UserVerificationProducer",
             async userVerificationEvent => await subscriberFn(userVerificationEvent)
         );

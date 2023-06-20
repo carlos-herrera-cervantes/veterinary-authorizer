@@ -3,7 +3,9 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Repositories.Repositories;
+using MongoDB.Driver;
 using Domain.Enums;
+using Domain.Models;
 using Web.Models;
 using Web.Config;
 
@@ -24,8 +26,7 @@ public class AccountController : ControllerBase
 
     #region snippet_Constructors
 
-    public AccountController
-    (
+    public AccountController(
         IUserRepository userRepository,
         IHttpClientFactory clientFactory,
         IUserSessionRepository userSessionRepository
@@ -43,8 +44,7 @@ public class AccountController : ControllerBase
     [HttpGet("verification/{jwt}")]
     public async Task<ContentResult> VerifyAccountAsync([FromRoute] string jwt)
     {
-        var user = await _userRepository.GetAsync(u => u.VerificationToken, jwt);
-
+        var user = await _userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.VerificationToken, jwt));
         var successVerificationTemplate = user.Type == UserType.Organization
             ? "/veterinary-statics/success-employee-verification.html"
             : "/veterinary-statics/success-customer-verification.html";
@@ -63,6 +63,7 @@ public class AccountController : ControllerBase
         await _userRepository.UpdateByIdAsync(user.Id, user);
 
         var stringContent = await httpResponse.Content.ReadAsStringAsync();
+
         return new ContentResult
         {
             Content = stringContent,
@@ -81,7 +82,7 @@ public class AccountController : ControllerBase
             });
         }
 
-        var user = await _userRepository.GetAsync(u => u.Email, lockUser.Emails[0]);
+        var user = await _userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Email, lockUser.Emails[0]));
 
         if (user is null)
         {
@@ -92,8 +93,9 @@ public class AccountController : ControllerBase
         }
 
         var locked = !user.Block;
-        await _userRepository.
-            UpdateManyAsync<string, bool>(u => u.Email, lockUser.Emails, u => u.Block, locked);
+        var filter = Builders<User>.Filter.In(u => u.Email, lockUser.Emails);
+        var updateDefinition = Builders<User>.Update.Set(u => u.Block, locked);
+        await _userRepository.UpdateManyAsync(filter, updateDefinition);
 
         var keys = lockUser.Emails.Select(email => $"jwt:{email}");
         await _userSessionRepository.DropJwtAsync(keys);

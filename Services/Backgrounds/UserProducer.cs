@@ -1,11 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Confluent.Kafka;
-using Domain.Constants;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using Confluent.Kafka;
 using Services.Types;
+using Domain.Constants;
 
 namespace Services.Backgrounds;
 
@@ -32,8 +32,8 @@ public class UserProducer : BackgroundService
         {
             var config = new ProducerConfig
             {
-                BootstrapServers = Environment.GetEnvironmentVariable("BOOTSTRAP_SERVERS"),
-                ClientId = Environment.GetEnvironmentVariable("CLIENT_ID")
+                BootstrapServers = KafkaConfig.BootstrapServer,
+                ClientId = KafkaConfig.ClientId
             };
             using var producer = new ProducerBuilder<Null, string>(config).Build();
 
@@ -43,8 +43,7 @@ public class UserProducer : BackgroundService
             await producer.ProduceAsync(KafkaTopic.UserCreated, message);
         };
 
-        _operationHandler.Subscribe
-        (
+        _operationHandler.Subscribe(
             "UserProducer",
             async userCreatedEvent => await subscriberFn(userCreatedEvent)
         );

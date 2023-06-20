@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Domain.Models;
+using Xunit;
 using MongoDB.Driver;
 using Moq;
 using Repositories.Repositories;
-using Xunit;
+using Domain.Models;
 
 namespace Tests.Repositories;
 
@@ -69,7 +69,7 @@ public class UserRepositoryTests
             .ReturnsAsync(_mockMongoCursor.Object);
 
         var userRepository = new UserRepository(_mockMongoClient.Object);
-        var result = await userRepository.GetAsync(u => u.Email, "bad@example.com");
+        var result = await userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Email, "bad@example.com"));
 
         _mockMongoCollection
             .Verify(x => x.FindAsync
@@ -107,7 +107,7 @@ public class UserRepositoryTests
             .ReturnsAsync(_mockMongoCursor.Object);
 
         var userRepository = new UserRepository(_mockMongoClient.Object);
-        var result = await userRepository.GetAsync(u => u.Email, "test@example.com");
+        var result = await userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Email, "test@example.com"));
 
         _mockMongoCollection
             .Verify(x => x.FindAsync
@@ -145,8 +145,7 @@ public class UserRepositoryTests
             .ReturnsAsync(_mockMongoCursor.Object);
 
         var userRepository = new UserRepository(_mockMongoClient.Object);
-        var result = await userRepository
-            .GetAllAsync(u => u.Email, new List<string> { "test@example.com" });
+        var result = await userRepository.GetAllAsync(Builders<User>.Filter.In(u => u.Email, new List<string> { "test@example.com" }));
 
         _mockMongoCollection
             .Verify(x => x.FindAsync
@@ -294,8 +293,9 @@ public class UserRepositoryTests
 
         var userRepository = new UserRepository(_mockMongoClient.Object);
         var emails = new List<string> { "test@example.com" };
-        await userRepository
-            .UpdateManyAsync<string, bool>(u => u.Email, emails, u => u.Block, true);
+        var filterDefinition = Builders<User>.Filter.In(u => u.Email, emails);
+        var updateDefinition = Builders<User>.Update.Set(u => u.Block, true);
+        await userRepository.UpdateManyAsync(filterDefinition, updateDefinition);
 
         _mockMongoCollection
             .Verify(x => x.BulkWriteAsync

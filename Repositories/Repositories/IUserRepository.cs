@@ -9,17 +9,17 @@ namespace Repositories.Repositories;
 
 public interface IUserRepository
 {
-    public Task<User> GetAsync(Expression<Func<User, string>> expression, string value);
+    public Task<User> GetAsync(FilterDefinition<User> expression);
 
-    public Task<IEnumerable<User>> GetAllAsync(Expression<Func<User, string>> expression, List<string> values);
+    public Task<IEnumerable<User>> GetAllAsync(FilterDefinition<User> filter);
 
-    Task<int> CountAsync(FilterDefinition<User> filter);
+    public Task<int> CountAsync(FilterDefinition<User> filter);
 
     public Task CreateAsync(User user);
 
-    public Task UpdateByIdAsync(string id, User user);
+    public Task UpdateByIdAsync(FilterDefinition<User> filter, User user);
 
-    public Task UpdateManyAsync<T, K>(Expression<Func<User, T>> filterExpression, List<T> values, Expression<Func<User, K>> updateExpression, K value) where T : class;
+    public Task UpdateManyAsync(FilterDefinition<User> filter, UpdateDefinition<User> updateDefinition);
 
-    Task DeleteManyAsync(FilterDefinition<User> filter);
+    public Task DeleteManyAsync(FilterDefinition<User> filter);
 }
