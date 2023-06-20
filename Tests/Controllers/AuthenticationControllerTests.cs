@@ -2,17 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using AutoMapper;
-using Domain.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using MongoDB.Driver;
+using AutoMapper;
+using Xunit;
 using Moq;
 using Repositories.Repositories;
 using Services;
 using Services.Types;
 using Web.Controllers;
 using Web.Models;
-using Xunit;
+using Domain.Models;
 
 namespace Tests.Controllers;
 
@@ -64,7 +65,7 @@ public class AuthenticationControllerTests
         };
 
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(user);
 
         _mockPasswordHasher
@@ -99,7 +100,7 @@ public class AuthenticationControllerTests
         var okObjectResult = response as OkObjectResult;
 
         _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+            .Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
 
         _mockPasswordHasher
             .Verify(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Once);
@@ -119,7 +120,7 @@ public class AuthenticationControllerTests
     public async Task SigninShouldReturn404ResponseWhenUserNull()
     {
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(() => null);
 
         var authenticationController = new AuthenticationController
@@ -142,7 +143,7 @@ public class AuthenticationControllerTests
         var notFoundResult = response as NotFoundResult;
 
         _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+            .Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
 
         _mockPasswordHasher
             .Verify(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
@@ -161,7 +162,7 @@ public class AuthenticationControllerTests
         };
 
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(user);
 
         _mockPasswordHasher
@@ -188,7 +189,7 @@ public class AuthenticationControllerTests
         var notFoundResult = response as NotFoundResult;
 
         _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+            .Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
 
         _mockPasswordHasher
             .Verify(x => x.Verify(It.IsAny<string>(), It.IsAny<string>()), Times.Once);

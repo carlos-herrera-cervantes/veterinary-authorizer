@@ -5,14 +5,15 @@ using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Domain.Models;
 using Microsoft.AspNetCore.Mvc;
+using Xunit;
+using MongoDB.Driver;
 using Moq;
 using Moq.Protected;
 using Repositories.Repositories;
 using Web.Controllers;
 using Web.Models;
-using Xunit;
+using Domain.Models;
 
 namespace Tests.Controllers;
 
@@ -64,7 +65,7 @@ public class AccountControllerTests
             .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError))
             .Verifiable();
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(new User { Type = "Organization" });
 
         var accountController = new AccountController
@@ -77,7 +78,7 @@ public class AccountControllerTests
         var expectedContent = "<html><body><h1>Something went wrong. Comunicate with support.</h1></body></html>";
 
         _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+            .Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
 
         Assert.IsType<ContentResult>(response);
         Assert.Equal("text/html", response.ContentType);
@@ -99,8 +100,7 @@ public class AccountControllerTests
             .Verifiable();
         mockDelegatingHandler
             .Protected()
-            .Setup<Task<HttpResponseMessage>>
-            (
+            .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>()
@@ -112,14 +112,13 @@ public class AccountControllerTests
             })
             .Verifiable();
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(new User { Id = "630954b1c339766f61ec8d0c", Type = "Organization" });
         _mockUserRepository
-            .Setup(x => x.UpdateByIdAsync(It.IsAny<string>(), It.IsAny<User>()))
+            .Setup(x => x.UpdateByIdAsync(It.IsAny<FilterDefinition<User>>(), It.IsAny<User>()))
             .Returns(Task.FromResult(true));
 
-        var accountController = new AccountController
-        (
+        var accountController = new AccountController(
             _mockUserRepository.Object,
             _mockHttpClientFactory.Object,
             _mockUserSessionRepository.Object
@@ -127,9 +126,9 @@ public class AccountControllerTests
         var response = await accountController.VerifyAccountAsync(jwt: "dummy-token");
 
         _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+            .Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
         _mockUserRepository
-            .Verify(x => x.UpdateByIdAsync(It.IsAny<string>(), It.IsAny<User>()), Times.Once);
+            .Verify(x => x.UpdateByIdAsync(It.IsAny<FilterDefinition<User>>(), It.IsAny<User>()), Times.Once);
 
         Assert.IsType<ContentResult>(response);
         Assert.Equal("text/html", response.ContentType);
@@ -158,7 +157,7 @@ public class AccountControllerTests
     public async Task SwitchLockedAsyncShouldReturnNotFound()
     {
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(() => null);
 
         var accountController = new AccountController
@@ -174,7 +173,7 @@ public class AccountControllerTests
         var response = await accountController.SwitchLockedAsync(lockUser);
 
         _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+            .Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
 
         Assert.IsType<NotFoundObjectResult>(response);
     }
@@ -183,20 +182,16 @@ public class AccountControllerTests
     public async Task SwitchLockedAsyncShouldReturnNoContent()
     {
         _mockUserRepository
-            .Setup(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()))
+            .Setup(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()))
             .ReturnsAsync(new User { Id = "630954b1c339766f61ec8d0c", Type = "Organization", Block = false });
         _mockUserRepository
-            .Setup(x => x.UpdateManyAsync<string, bool>
-            (
-                It.IsAny<Expression<Func<User, string>>>(),
-                It.IsAny<List<string>>(),
-                It.IsAny<Expression<Func<User, bool>>>(),
-                It.IsAny<bool>()
+            .Setup(x => x.UpdateManyAsync(
+                It.IsAny<FilterDefinition<User>>(),
+                It.IsAny<UpdateDefinition<User>>()
             ))
             .Returns(Task.FromResult(true));
 
-        var accountController = new AccountController
-        (
+        var accountController = new AccountController(
             _mockUserRepository.Object,
             _mockHttpClientFactory.Object,
             _mockUserSessionRepository.Object
@@ -207,8 +202,7 @@ public class AccountControllerTests
         };
         var response = await accountController.SwitchLockedAsync(lockUser);
 
-        _mockUserRepository
-            .Verify(x => x.GetAsync(It.IsAny<Expression<Func<User, string>>>(), It.IsAny<string>()), Times.Once);
+        _mockUserRepository.Verify(x => x.GetAsync(It.IsAny<FilterDefinition<User>>()), Times.Once);
 
         Assert.IsType<NoContentResult>(response);
     }

@@ -2,8 +2,9 @@ using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Domain.Models;
 using Microsoft.IdentityModel.Tokens;
+using Domain.Models;
+using Domain.Constants;
 
 namespace Services;
 
@@ -20,14 +21,13 @@ public class TokenManager : ITokenManager
             new Claim(ClaimTypes.Role, roles),
             new Claim(ClaimTypes.NameIdentifier, user.Id ?? user.Email)
         });
-        string secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY");
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = claims,
             SigningCredentials = new SigningCredentials
             (
-                new SymmetricSecurityKey(Encoding.ASCII.GetBytes(secretKey)),
+                new SymmetricSecurityKey(Encoding.ASCII.GetBytes(JwtConfig.SecretKey)),
                 SecurityAlgorithms.HmacSha256Signature
             ),
             Expires = DateTime.UtcNow.AddDays(2)

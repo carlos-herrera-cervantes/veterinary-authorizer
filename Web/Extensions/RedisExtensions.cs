@@ -8,8 +8,7 @@ public static class RedisExtensions
 {
     public static IServiceCollection AddRedisClient(this IServiceCollection services)
     {
-        string connectionString = Environment.GetEnvironmentVariable("REDIS_URI");
-        services.AddSingleton<IRedisClientsManagerAsync>(c => new RedisManagerPool(connectionString));
+        services.AddSingleton<IRedisClientsManagerAsync>(c => new RedisManagerPool(Domain.Constants.RedisConfig.Uri));
         return services;
     }
 }

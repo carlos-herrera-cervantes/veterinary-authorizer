@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Moq;
-using Repositories.Repositories;
 using ServiceStack.Redis;
 using Xunit;
+using Repositories.Repositories;
 
 namespace Tests.Repositories;
 
@@ -19,10 +19,7 @@ public class UserSessionRepositoryTests
 
     #region snippet_Constructors
 
-    public UserSessionRepositoryTests()
-    {
-        _mockRedisClientsManager = new Mock<IRedisClientsManagerAsync>();
-    }
+    public UserSessionRepositoryTests() => _mockRedisClientsManager = new Mock<IRedisClientsManagerAsync>();
 
     #endregion
 
@@ -67,8 +64,7 @@ public class UserSessionRepositoryTests
         await userSessionRepository.DropJwtAsync(new List<string> { "jwt:test@example.com" });
 
         mockRedisClient
-            .Verify
-            (
+            .Verify(
                 x => x.RemoveAllAsync(It.IsAny<IEnumerable<string>>(), It.IsAny<CancellationToken>()),
                 Times.Once
             );
@@ -91,8 +87,7 @@ public class UserSessionRepositoryTests
         await userSessionRepository.SetJwtAsync("dummy-key", "dummy-token");
 
         mockRedisClient
-            .Verify(x => x.SetAsync
-            (
+            .Verify(x => x.SetAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<CancellationToken>()

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using MongoDB.Driver;
 using Domain.Enums;
 using Domain.Models;
 using Repositories.Repositories;
@@ -10,7 +11,6 @@ using Services.Types;
 using Web.Models;
 using Web.Types;
 using Web.Config;
-
 
 namespace Web.Controllers;
 
@@ -37,8 +37,7 @@ public class AuthenticationController : ControllerBase
 
     #region snippet_Constructors
 
-    public AuthenticationController
-    (
+    public AuthenticationController(
         IUserRepository userRepository,
         IMapper mapper,
         IPasswordHasher passwordHasher,
@@ -64,7 +63,7 @@ public class AuthenticationController : ControllerBase
     [HttpPost("sign-in")]
     public async Task<IActionResult> SignInAsync([FromBody] CreateUser credentials)
     {
-        var user = await _userRepository.GetAsync(u => u.Email, credentials.Email);
+        var user = await _userRepository.GetAsync(Builders<User>.Filter.Eq(u => u.Email, credentials.Email));
 
         if (user is null || !_passwordHasher.Verify(credentials.Password, user.Password))
         {
