@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Confluent.Kafka;
 using Newtonsoft.Json;
 using Services.Types;
@@ -19,36 +20,52 @@ public class UserVerificationProducer : BackgroundService
 
     private readonly HttpClient _httpClient;
 
+    private readonly ILogger _logger;
+
     #endregion
 
     #region snippet_Constructors
 
     public UserVerificationProducer(
         IOperationHandler<UserVerificationEvent> operationHandler,
-        IHttpClientFactory clientFactory
+        IHttpClientFactory clientFactory,
+        ILogger<UserVerificationProducer> logger
     )
     {
         _operationHandler = operationHandler;
         _httpClient = clientFactory.CreateClient("veterinary");
+        _logger = logger;
     }
 
     #endregion
 
     #region snippet_ActionMethods
 
+    private async Task<HttpResponseMessage> GetVerificationTemplateAsync(string welcomeTemplateUrl)
+    {
+        try
+        {
+            using var httpResponse = await _httpClient.GetAsync(welcomeTemplateUrl);
+            return httpResponse;
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error while getting the welcome template", e.Message);
+        }
+
+        return null;
+    }
+
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var subscriberFn = async (UserVerificationEvent userVerificationEvent) =>
         {
-            var welcomeTemplate = userVerificationEvent.UserType == UserType.Organization
+            var welcomeTemplateUrl = userVerificationEvent.UserType == UserType.Organization
                 ? "/veterinary-statics/welcome-employee.html"
                 : "/veterinary-statics/welcome-customer.html";
-            using var httpResponse = await _httpClient.GetAsync(welcomeTemplate);
+            HttpResponseMessage httpResponse = await GetVerificationTemplateAsync(welcomeTemplateUrl);
 
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                return;
-            }
+            if (httpResponse is null) return;
 
             var config = new ProducerConfig
             {
